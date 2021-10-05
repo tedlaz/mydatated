@@ -17,7 +17,7 @@ class MyDataAPI:
             response = conn.getresponse()
             data = response.read()
             conn.close()
-            return data
+            return data.decode()
         except Exception as err:
             print(f"Error: {err}")
 
