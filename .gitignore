@@ -111,3 +111,4 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 credentials.json
+.vscode
