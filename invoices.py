@@ -1,16 +1,16 @@
 import xml.etree.ElementTree as gfg
-from ntuples import CLine
+from ntuples import CLine, Total
 
 
 class Invoice:
-    def __init__(self, typ, issuer, counterpart, head, payments, lines: list, total):
+    def __init__(self, typ, issuer, counterpart, head, payments, lines: list):
         self.typ = typ
         self.issuer = issuer
         self.counterpart = counterpart
         self.head = head
         self.payments = payments
         self.lines = lines
-        self.total = total
+        # self.total = total
 
     def _render_issuer(self):
         issuer = gfg.Element("issuer")
@@ -166,14 +166,25 @@ class Invoice:
                 clines.append(CLine(ctype, ccat, val))
         return clines
 
+    def _calc_total(self):
+        tval = tvat = 0
+        for line in self.lines:
+            tval += line.value
+            tvat += line.vat
+        tval = round(tval, 2)
+        tvat = round(tvat, 2)
+        gross = round(tval + tvat, 2)
+        return Total(tval, tvat, gross)
+
     def _render_summary(self):
         summary = gfg.Element("invoiceSummary")
 
+        total = self._calc_total()
         totalnetvalue = gfg.SubElement(summary, "totalNetValue")
-        totalnetvalue.text = f"{self.total.value:0.2f}"
+        totalnetvalue.text = f"{total.value:0.2f}"
 
         totalvatamount = gfg.SubElement(summary, "totalVatAmount")
-        totalvatamount.text = f"{self.total.vat:0.2f}"
+        totalvatamount.text = f"{total.vat:0.2f}"
 
         totalwithheld = gfg.SubElement(summary, "totalWithheldAmount")
         totalwithheld.text = f"{0:0.2f}"
@@ -191,7 +202,7 @@ class Invoice:
         totaldeductions.text = f"{0:0.2f}"
 
         totalgrossvalue = gfg.SubElement(summary, "totalGrossValue")
-        totalgrossvalue.text = f"{self.total.gross:0.2f}"
+        totalgrossvalue.text = f"{total.gross:0.2f}"
 
         for lin in self._summary_classification_lines():
             summary.append(self._line_classification(lin))
